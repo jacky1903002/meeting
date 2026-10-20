@@ -249,12 +249,11 @@
           <table class="corporate-table">
             <thead>
               <tr>
-                <th style="width: 110px;">會議 ID</th>
                 <th style="width: 140px;">會議日期</th>
                 <th>會議主題</th>
                 <th style="width: 100px;">主辦部門</th>
                 <th style="width: 110px;">會議類型</th>
-                <th style="width: 80px;" class="text-center">人數</th>
+                <th style="width: 160px;">與會人員</th>
                 <th style="width: 100px;">主持人</th>
                 <th>決議摘要</th>
                 <th style="width: 100px;" class="text-center">紀錄狀態</th>
@@ -405,13 +404,13 @@
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">會議 ID</label>
-            <input type="text" id="mId" required readonly class="w-full bg-gray-100 px-3 py-2 border border-gray-300 rounded text-sm text-gray-600 font-mono">
+            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">會議日期與時間 *</label>
+            <input type="datetime-local" id="mDateTime" required class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-corporate-navy focus:outline-none">
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">會議日期與時間 *</label>
-            <input type="datetime-local" id="mDateTime" required class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-corporate-navy focus:outline-none">
+            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">會議類型</label>
+            <input type="text" id="mType" placeholder="如：例行週會" class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-corporate-navy focus:outline-none">
           </div>
         </div>
 
@@ -420,7 +419,7 @@
           <input type="text" id="mTopic" required placeholder="請輸入會議主題" class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-corporate-navy focus:outline-none">
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">主辦部門 *</label>
             <select id="mDept" required class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-corporate-navy focus:outline-none">
@@ -436,30 +435,23 @@
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">會議類型</label>
-            <input type="text" id="mType" placeholder="如：例行週會" class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-corporate-navy focus:outline-none">
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">與會人數</label>
-            <input type="number" id="mAttendees" min="1" value="1" class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-corporate-navy focus:outline-none">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
             <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">主持人</label>
             <input type="text" id="mChair" placeholder="主持人姓名" class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-corporate-navy focus:outline-none">
           </div>
+        </div>
 
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">紀錄狀態 *</label>
-            <select id="mStatus" required class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-corporate-navy focus:outline-none">
-              <option value="進行中">進行中</option>
-              <option value="已結案">已結案</option>
-              <option value="草稿">草稿</option>
-            </select>
-          </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">與會人員</label>
+          <input type="text" id="mAttendees" placeholder="例：張經理、李組長、王專員" class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-corporate-navy focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">紀錄狀態 *</label>
+          <select id="mStatus" required class="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-corporate-navy focus:outline-none">
+            <option value="進行中">進行中</option>
+            <option value="已結案">已結案</option>
+            <option value="草稿">草稿</option>
+          </select>
         </div>
 
         <div>
@@ -746,9 +738,52 @@
       const keys = Object.keys(meetingsObj);
 
       if (keys.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-gray-400">目前尚無會議記錄資料</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-gray-400">目前尚無會議記錄資料</td></tr>`;
         return;
       }
+
+      let html = '';
+      keys.forEach(key => {
+        const item = meetingsObj[key];
+        
+        // Filters
+        if (deptFilter && item.dept !== deptFilter) return;
+        if (search) {
+          const text = (item.topic + item.chair + item.summary + (item.attendees || '')).toLowerCase();
+          if (!text.includes(search)) return;
+        }
+
+        // Format Date
+        const dateStr = item.dateTime ? item.dateTime.replace('T', ' ') : '-';
+
+        // Badge Class
+        let statusBadge = 'bg-gray-100 text-gray-700';
+        if (item.status === '已結案') statusBadge = 'bg-emerald-100 text-emerald-800 border border-emerald-300';
+        else if (item.status === '進行中') statusBadge = 'bg-blue-100 text-blue-800 border border-blue-300';
+        else if (item.status === '草稿') statusBadge = 'bg-amber-100 text-amber-800 border border-amber-300';
+
+        html += `
+          <tr>
+            <td class="whitespace-nowrap text-xs">${escapeHtml(dateStr)}</td>
+            <td class="font-medium text-gray-900">${escapeHtml(item.topic || '')}</td>
+            <td><span class="inline-block px-2 py-0.5 text-xs bg-slate-200 rounded text-slate-800">${escapeHtml(item.dept || '')}</span></td>
+            <td>${escapeHtml(item.type || '')}</td>
+            <td class="text-xs text-gray-700">${escapeHtml(item.attendees || '-')}</td>
+            <td>${escapeHtml(item.chair || '')}</td>
+            <td class="text-gray-600">${escapeHtml(item.summary || '')}</td>
+            <td class="text-center">
+              <span class="px-2.5 py-1 text-xs rounded-full font-medium ${statusBadge}">${escapeHtml(item.status || '')}</span>
+            </td>
+            <td class="text-center no-print whitespace-nowrap">
+              <button onclick="editMeeting('${key}')" class="text-blue-600 hover:text-blue-800 mr-2" title="編輯"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button onclick="window.dbDeleteMeeting('${key}')" class="text-red-600 hover:text-red-800" title="刪除"><i class="fa-solid fa-trash-can"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html || `<tr><td colspan="9" class="text-center py-6 text-gray-400">無符合條件的會議資料</td></tr>`;
+    }
 
       let html = '';
       keys.forEach(key => {
@@ -861,8 +896,6 @@
       document.getElementById('meetingForm').reset();
       document.getElementById('mIdKey').value = '';
       document.getElementById('meetingModalTitle').textContent = '新增會議記錄';
-      // Auto generate ID
-      document.getElementById('mId').value = 'MTG-' + Date.now().toString().slice(-6);
       
       // Default datetime
       const now = new Date();
@@ -873,22 +906,16 @@
       document.getElementById('meetingModal').classList.add('flex');
     }
 
-    function closeMeetingModal() {
-      document.getElementById('meetingModal').classList.add('hidden');
-      document.getElementById('meetingModal').classList.remove('flex');
-    }
-
     function editMeeting(key) {
       const item = window.appState.meetings[key];
       if (!item) return;
 
       document.getElementById('mIdKey').value = key;
-      document.getElementById('mId').value = item.meetingId || key;
       document.getElementById('mDateTime').value = item.dateTime || '';
       document.getElementById('mTopic').value = item.topic || '';
       document.getElementById('mDept').value = item.dept || '製造';
       document.getElementById('mType').value = item.type || '';
-      document.getElementById('mAttendees').value = item.attendees || 1;
+      document.getElementById('mAttendees').value = item.attendees || '';
       document.getElementById('mChair').value = item.chair || '';
       document.getElementById('mStatus').value = item.status || '進行中';
       document.getElementById('mSummary').value = item.summary || '';
@@ -902,12 +929,11 @@
       e.preventDefault();
       const key = document.getElementById('mIdKey').value;
       const data = {
-        meetingId: document.getElementById('mId').value,
         dateTime: document.getElementById('mDateTime').value,
         topic: document.getElementById('mTopic').value,
         dept: document.getElementById('mDept').value,
         type: document.getElementById('mType').value,
-        attendees: parseInt(document.getElementById('mAttendees').value, 10) || 1,
+        attendees: document.getElementById('mAttendees').value,
         chair: document.getElementById('mChair').value,
         status: document.getElementById('mStatus').value,
         summary: document.getElementById('mSummary').value
@@ -1102,17 +1128,16 @@
       let csvContent = "\uFEFF"; // UTF-8 BOM
       
       if (type === 'meetings') {
-        csvContent += "會議ID,會議日期,會議主題,主辦部門,會議類型,與會人數,主持人,決議摘要,紀錄狀態\n";
+        csvContent += "會議日期,會議主題,主辦部門,會議類型,與會人員,主持人,決議摘要,紀錄狀態\n";
         const meetingsObj = window.appState.meetings || {};
         Object.keys(meetingsObj).forEach(k => {
           const m = meetingsObj[k];
           const row = [
-            m.meetingId || k,
             m.dateTime || '',
             `"${(m.topic || '').replace(/"/g, '""')}"`,
             m.dept || '',
             m.type || '',
-            m.attendees || 0,
+            `"${(m.attendees || '').replace(/"/g, '""')}"`,
             m.chair || '',
             `"${(m.summary || '').replace(/"/g, '""')}"`,
             m.status || ''
