@@ -64,35 +64,49 @@
 </head>
 <body class="bg-slate-100 font-sans text-slate-800 min-h-screen flex flex-col">
 
-    <!-- 登入頁面 (Login Overlay) -->
+    <!-- 登入 / 註冊頁面 (Auth Overlay) -->
     <div id="loginOverlay" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 border border-slate-200">
             <div class="text-center mb-6">
                 <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-navy-subtle text-navy mb-3">
                     <i data-lucide="shield-check" class="w-8 h-8"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-800">會議記錄與分析系統</h2>
-                <p class="text-xs text-slate-500 mt-1">請輸入 Firebase 帳號密碼以登入</p>
+                <h2 class="text-2xl font-bold text-slate-800" id="authTitle">會議記錄與分析系統</h2>
+                <p class="text-xs text-slate-500 mt-1" id="authSubtitle">請輸入 Firebase 帳號密碼以登入專屬空間</p>
             </div>
 
-            <form id="loginForm" class="space-y-4">
+            <form id="authForm" class="space-y-4">
+                <!-- 姓名欄位（僅註冊模式時顯示並強制填寫） -->
+                <div id="nameFieldGroup" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">真實姓名 / 稱呼 <span class="text-red-500 font-bold">*</span></label>
+                    <input type="text" id="authName" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-navy outline-none text-sm" placeholder="例如：張小明 (必填)">
+                </div>
+
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">電子郵件 (Email)</label>
-                    <input type="email" id="loginEmail" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-navy outline-none text-sm" placeholder="user@example.com">
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">電子郵件 (Email) <span class="text-red-500 font-bold">*</span></label>
+                    <input type="email" id="authEmail" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-navy outline-none text-sm" placeholder="user@example.com">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">密碼 (Password)</label>
-                    <input type="password" id="loginPassword" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-navy outline-none text-sm" placeholder="••••••••">
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">密碼 (Password) <span class="text-red-500 font-bold">*</span></label>
+                    <input type="password" id="authPassword" required minlength="6" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-navy focus:border-navy outline-none text-sm" placeholder="至少 6 位數">
                 </div>
-                <div id="loginError" class="text-red-500 text-xs hidden flex items-center gap-1">
-                    <i data-lucide="alert-circle" class="w-4 h-4"></i>
-                    <span id="loginErrorMsg">登入失敗</span>
+
+                <div id="authError" class="text-red-500 text-xs hidden flex items-center gap-1 bg-red-50 p-2.5 rounded-lg border border-red-200">
+                    <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+                    <span id="authErrorMsg">驗證失敗</span>
                 </div>
-                <button type="submit" id="loginBtn" class="w-full bg-navy hover:bg-navy-dark text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
-                    <i data-lucide="log-in" class="w-4 h-4"></i>
-                    <span>登入系統</span>
+
+                <button type="submit" id="authSubmitBtn" class="w-full bg-navy hover:bg-navy-dark text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm">
+                    <i data-lucide="log-in" class="w-4 h-4" id="authBtnIcon"></i>
+                    <span id="authBtnText">登入系統</span>
                 </button>
             </form>
+
+            <!-- 切換登入 / 註冊模式按鈕 -->
+            <div class="mt-6 pt-4 border-t border-slate-200 text-center text-xs text-slate-600">
+                <span id="toggleAuthHint">還沒有帳號嗎？</span>
+                <button type="button" id="toggleAuthModeBtn" class="text-navy font-bold hover:underline ml-1">免費註冊新帳號</button>
+            </div>
         </div>
     </div>
 
@@ -127,8 +141,11 @@
 
                         <!-- 使用者資訊與登出 -->
                         <div class="flex items-center gap-3 border-l border-slate-600 pl-4">
-                            <span id="userDisplayEmail" class="hidden sm:inline font-medium text-white">--</span>
-                            <button id="logoutBtn" title="登出系統" class="hover:text-red-300 transition-colors flex items-center gap-1">
+                            <div class="flex items-center gap-1.5">
+                                <i data-lucide="user" class="w-3.5 h-3.5 text-slate-300"></i>
+                                <span id="userDisplayName" class="font-medium text-white">--</span>
+                            </div>
+                            <button id="logoutBtn" title="登出系統" class="hover:text-red-300 transition-colors flex items-center gap-1 ml-2">
                                 <i data-lucide="log-out" class="w-4 h-4"></i>
                                 <span class="hidden sm:inline">登出</span>
                             </button>
@@ -550,6 +567,8 @@
         import { 
             getAuth, 
             signInWithEmailAndPassword, 
+            createUserWithEmailAndPassword,
+            updateProfile,
             onAuthStateChanged, 
             signOut 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -579,7 +598,9 @@
         const auth = getAuth(app);
         const db = getDatabase(app);
 
-        // 全域資料快取
+        // 全域變數
+        let currentUserUid = null;
+        let isRegisterMode = false; // 登入/註冊模式切換標誌
         let rawMeetings = {};
         let rawTasks = {};
         let chartInstanceStatus = null;
@@ -589,25 +610,75 @@
         lucide.createIcons();
 
         // -------------------------------------------------------------
-        // 1. Firebase 身份驗證與連線狀態監控
+        // 1. 登入 / 註冊切換與 Firebase 身份驗證
         // -------------------------------------------------------------
+        const authForm = document.getElementById('authForm');
+        const authError = document.getElementById('authError');
+        const authErrorMsg = document.getElementById('authErrorMsg');
+        const toggleAuthModeBtn = document.getElementById('toggleAuthModeBtn');
+        const nameFieldGroup = document.getElementById('nameFieldGroup');
+        const authNameInput = document.getElementById('authName');
 
-        // 登入表單提交
-        const loginForm = document.getElementById('loginForm');
-        const loginError = document.getElementById('loginError');
-        const loginErrorMsg = document.getElementById('loginErrorMsg');
+        // 切換登入與註冊模式
+        toggleAuthModeBtn.addEventListener('click', () => {
+            isRegisterMode = !isRegisterMode;
+            authError.classList.add('hidden');
 
-        loginForm.addEventListener('submit', async (e) => {
+            if (isRegisterMode) {
+                document.getElementById('authTitle').textContent = '註冊新帳號';
+                document.getElementById('authSubtitle').textContent = '請填寫真實姓名與 Email 建立專屬空間';
+                document.getElementById('authBtnText').textContent = '立即註冊並登入';
+                document.getElementById('toggleAuthHint').textContent = '已經有帳號了？';
+                toggleAuthModeBtn.textContent = '返回登入';
+                nameFieldGroup.classList.remove('hidden');
+                authNameInput.required = true; // 強制 HTML5 必填
+            } else {
+                document.getElementById('authTitle').textContent = '會議記錄與分析系統';
+                document.getElementById('authSubtitle').textContent = '請輸入 Firebase 帳號密碼以登入專屬空間';
+                document.getElementById('authBtnText').textContent = '登入系統';
+                document.getElementById('toggleAuthHint').textContent = '還沒有帳號嗎？';
+                toggleAuthModeBtn.textContent = '免費註冊新帳號';
+                nameFieldGroup.classList.add('hidden');
+                authNameInput.required = false; // 登入模式時解除必填
+            }
+        });
+
+        // 提交表單（處理登入或註冊）
+        authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const displayName = authNameInput.value.trim();
 
             try {
-                loginError.classList.add('hidden');
-                await signInWithEmailAndPassword(auth, email, password);
+                authError.classList.add('hidden');
+
+                if (isRegisterMode) {
+                    // 【強制檢查姓名】若為空值則阻擋註冊
+                    if (!displayName) {
+                        authErrorMsg.textContent = '請輸入您的真實姓名 / 稱呼，此欄位為必填項！';
+                        authError.classList.remove('hidden');
+                        authNameInput.focus();
+                        return;
+                    }
+
+                    // 1. 註冊 Firebase 新帳號
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    // 2. 設定使用者 Profile 姓名
+                    await updateProfile(userCredential.user, { displayName: displayName });
+                } else {
+                    // 登入既存帳號
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
             } catch (err) {
-                loginErrorMsg.textContent = '登入失敗：' + err.message;
-                loginError.classList.remove('hidden');
+                let msg = err.message;
+                if (err.code === 'auth/email-already-in-use') msg = '此 Email 已經被註冊過，請直接登入';
+                else if (err.code === 'auth/invalid-email') msg = '無效的 Email 格式';
+                else if (err.code === 'auth/weak-password') msg = '密碼強度不足，至少需要 6 個字元';
+                else if (err.code === 'auth/invalid-credential') msg = 'Email 或密碼錯誤';
+                
+                authErrorMsg.textContent = msg;
+                authError.classList.remove('hidden');
             }
         });
 
@@ -622,13 +693,18 @@
             const appContent = document.getElementById('appContent');
             
             if (user) {
+                currentUserUid = user.uid;
                 loginOverlay.classList.add('hidden');
                 appContent.classList.remove('hidden');
-                document.getElementById('userDisplayEmail').textContent = user.email;
+
+                // 右上角顯示用戶姓名或 Email
+                const nameToShow = user.displayName ? `${user.displayName} (${user.email})` : user.email;
+                document.getElementById('userDisplayName').textContent = nameToShow;
                 
-                // 啟動資料庫監聽
-                initDatabaseListeners();
+                // 啟動專屬於該使用者 UID 的資料庫監聽
+                initDatabaseListeners(currentUserUid);
             } else {
+                currentUserUid = null;
                 loginOverlay.classList.remove('hidden');
                 appContent.classList.add('hidden');
             }
@@ -662,34 +738,34 @@
         }
 
         // -------------------------------------------------------------
-        // 2. 資料庫即時讀取與監聽
+        // 2. 依使用者 UID 隔離的資料庫即時讀取與監聽
         // -------------------------------------------------------------
-        function initDatabaseListeners() {
-            // 監聽會議紀錄
-            onValue(ref(db, 'meetings'), (snapshot) => {
+        function initDatabaseListeners(uid) {
+            onValue(ref(db, `users/${uid}/meetings`), (snapshot) => {
                 rawMeetings = snapshot.val() || {};
                 renderMeetingsTable();
                 populateMeetingDropdown();
                 updateDashboard();
             });
 
-            // 監聽待辦事項
-            onValue(ref(db, 'tasks'), (snapshot) => {
+            onValue(ref(db, `users/${uid}/tasks`), (snapshot) => {
                 rawTasks = snapshot.val() || {};
                 renderTasksTable();
                 updateDashboard();
             });
 
-            // 監聽元數據（如最後更新時間）
-            onValue(ref(db, 'meta/lastUpdated'), (snapshot) => {
+            onValue(ref(db, `users/${uid}/meta/lastUpdated`), (snapshot) => {
                 if (snapshot.exists()) {
                     updateLastSavedTime(snapshot.val());
+                } else {
+                    updateLastSavedTime(null);
                 }
             });
         }
 
         async function touchLastUpdated() {
-            await set(ref(db, 'meta/lastUpdated'), serverTimestamp());
+            if (!currentUserUid) return;
+            await set(ref(db, `users/${currentUserUid}/meta/lastUpdated`), serverTimestamp());
         }
 
         // -------------------------------------------------------------
@@ -736,7 +812,6 @@
             document.getElementById('meetingDocId').value = '';
             document.getElementById('meetingModalTitle').textContent = '新增會議記錄';
             
-            // 預設當前時間
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('mDateTime').value = now.toISOString().slice(0, 16);
@@ -746,6 +821,7 @@
 
         meetingForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!currentUserUid) return;
             const docId = document.getElementById('meetingDocId').value;
             
             const payload = {
@@ -761,11 +837,9 @@
             };
 
             if (docId) {
-                // 更新 existing
-                await set(ref(db, `meetings/${docId}`), payload);
+                await set(ref(db, `users/${currentUserUid}/meetings/${docId}`), payload);
             } else {
-                // 新增
-                const newRef = push(ref(db, 'meetings'));
+                const newRef = push(ref(db, `users/${currentUserUid}/meetings`));
                 await set(newRef, payload);
             }
 
@@ -773,7 +847,6 @@
             meetingModal.classList.add('hidden');
         });
 
-        // 搜尋與篩選事件監聽
         document.getElementById('searchMeeting').addEventListener('input', renderMeetingsTable);
         document.getElementById('filterDepartment').addEventListener('change', renderMeetingsTable);
 
@@ -790,11 +863,9 @@
                 return;
             }
 
-            // 轉為陣列並按時間倒序
             let list = keys.map(k => ({ id: k, ...rawMeetings[k] }));
             list.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
 
-            // 篩選 logic
             list = list.filter(m => {
                 const matchSearch = (m.title || '').toLowerCase().includes(searchStr) ||
                                     (m.host || '').toLowerCase().includes(searchStr) ||
@@ -812,13 +883,11 @@
             list.forEach(m => {
                 const tr = document.createElement('tr');
                 
-                // 狀態 Badge 顏色
                 let statusBadge = '';
                 if (m.status === '已結案') statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-emerald-100 text-emerald-800 font-medium">已結案</span>';
                 else if (m.status === '進行中') statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 font-medium">進行中</span>';
                 else statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-slate-200 text-slate-700 font-medium">草稿</span>';
 
-                // 日期格式化 (YYYY-MM-DD HH:mm)
                 const formattedDate = m.dateTime ? m.dateTime.replace('T', ' ') : '--';
 
                 tr.innerHTML = `
@@ -865,8 +934,9 @@
         };
 
         window.deleteMeeting = async function(id) {
+            if (!currentUserUid) return;
             if (confirm('確定要刪除此會議記錄嗎？關聯的待辦事項可能受影響。')) {
-                await remove(ref(db, `meetings/${id}`));
+                await remove(ref(db, `users/${currentUserUid}/meetings/${id}`));
                 await touchLastUpdated();
             }
         };
@@ -878,7 +948,6 @@
         const taskModal = document.getElementById('taskModal');
         const taskForm = document.getElementById('taskForm');
 
-        // 動態載入會議選單至待辦事項 Modal
         function populateMeetingDropdown() {
             const select = document.getElementById('tMeetingKey');
             select.innerHTML = '<option value="">請選擇關聯會議...</option>';
@@ -898,7 +967,6 @@
             document.getElementById('taskDocId').value = '';
             document.getElementById('taskModalTitle').textContent = '新增待辦事項';
             
-            // 自動生成任務 ID (例如: TASK-20261020-XXXX)
             const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
             const rand = Math.floor(1000 + Math.random() * 9000);
             document.getElementById('tTaskId').value = `TSK-${dateStr}-${rand}`;
@@ -908,6 +976,7 @@
 
         taskForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!currentUserUid) return;
             const docId = document.getElementById('taskDocId').value;
             
             const payload = {
@@ -922,9 +991,9 @@
             };
 
             if (docId) {
-                await set(ref(db, `tasks/${docId}`), payload);
+                await set(ref(db, `users/${currentUserUid}/tasks/${docId}`), payload);
             } else {
-                const newRef = push(ref(db, 'tasks'));
+                const newRef = push(ref(db, `users/${currentUserUid}/tasks`));
                 await set(newRef, payload);
             }
 
@@ -932,12 +1001,10 @@
             taskModal.classList.add('hidden');
         });
 
-        // 搜尋與篩選事件監聽
         document.getElementById('searchTask').addEventListener('input', renderTasksTable);
         document.getElementById('filterTaskStatus').addEventListener('change', renderTasksTable);
         document.getElementById('filterOverdue').addEventListener('change', renderTasksTable);
 
-        // **自動逾期判斷邏輯**：當任務狀態未完成（!= 已完成）且 當前日期已超過預計完成日
         function checkIsOverdue(dueDate, status) {
             if (status === '已完成') return false;
             if (!dueDate) return false;
@@ -985,18 +1052,15 @@
                 const tr = document.createElement('tr');
                 const isOverdue = checkIsOverdue(t.dueDate, t.status);
 
-                // 關聯會議名稱
                 const parentMeeting = rawMeetings[t.meetingKey];
                 const meetingTitle = parentMeeting ? parentMeeting.title : '(未知或已刪除)';
 
-                // 執行狀態 Badge
                 let statusBadge = '';
                 if (t.status === '已完成') statusBadge = '<span class="px-2 py-0.5 text-xs rounded bg-emerald-100 text-emerald-800 font-medium">已完成</span>';
                 else if (t.status === '進行中') statusBadge = '<span class="px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-800 font-medium">進行中</span>';
                 else if (t.status === '未開始') statusBadge = '<span class="px-2 py-0.5 text-xs rounded bg-slate-200 text-slate-700 font-medium">未開始</span>';
                 else statusBadge = '<span class="px-2 py-0.5 text-xs rounded bg-amber-100 text-amber-800 font-medium">暫緩</span>';
 
-                // 自動逾期狀態 Badge
                 let overdueBadge = '';
                 if (isOverdue) {
                     overdueBadge = '<span class="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 font-bold animate-pulse inline-flex items-center gap-1"><i data-lucide="alert-circle" class="w-3 h-3"></i>已逾期</span>';
@@ -1047,13 +1111,13 @@
         };
 
         window.deleteTask = async function(id) {
+            if (!currentUserUid) return;
             if (confirm('確定要刪除此待辦事項嗎？')) {
-                await remove(ref(db, `tasks/${id}`));
+                await remove(ref(db, `users/${currentUserUid}/tasks/${id}`));
                 await touchLastUpdated();
             }
         };
 
-        // 通用 Modal 關閉按鈕事件
         document.querySelectorAll('.closeModalBtn').forEach(btn => {
             btn.addEventListener('click', () => {
                 meetingModal.classList.add('hidden');
@@ -1068,7 +1132,6 @@
             const meetingsArray = Object.values(rawMeetings);
             const tasksArray = Object.values(rawTasks);
 
-            // KPI 計算
             const totalMeetings = meetingsArray.length;
             const totalTasks = tasksArray.length;
 
@@ -1078,19 +1141,16 @@
             const completionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) : '0.0';
             const overdueRate = totalTasks > 0 ? ((overdueTasks / totalTasks) * 100).toFixed(1) : '0.0';
 
-            // 更新 DOM 數值 (套用預設格式要求)
             document.getElementById('kpiTotalMeetings').textContent = totalMeetings.toLocaleString();
             document.getElementById('kpiTotalTasks').textContent = totalTasks.toLocaleString();
             document.getElementById('kpiCompletionRate').textContent = `${completionRate}%`;
             document.getElementById('kpiOverdueTasks').textContent = overdueTasks.toLocaleString();
             document.getElementById('kpiOverdueRate').textContent = `佔總任務 ${overdueRate}%`;
 
-            // Render Charts
             renderStatusChart(tasksArray);
             renderDeptChart(meetingsArray, tasksArray);
         }
 
-        // 圖表 1: 任務狀態 Doughnut Chart
         function renderStatusChart(tasks) {
             const ctx = document.getElementById('taskStatusChart').getContext('2d');
             
@@ -1122,7 +1182,6 @@
             });
         }
 
-        // 圖表 2: 各部門分布 Bar Chart
         function renderDeptChart(meetings, tasks) {
             const ctx = document.getElementById('deptDistributionChart').getContext('2d');
             
@@ -1196,7 +1255,7 @@
 
         document.getElementById('importMeetingsExcelInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
-            if (!file) return;
+            if (!file || !currentUserUid) return;
 
             const reader = new FileReader();
             reader.onload = async function(e) {
@@ -1229,14 +1288,14 @@
                             updatedAt: Date.now()
                         };
 
-                        const newRef = push(ref(db, 'meetings'));
+                        const newRef = push(ref(db, `users/${currentUserUid}/meetings`));
                         await set(newRef, payload);
                         count++;
                     }
 
                     await touchLastUpdated();
                     alert(`成功匯入 ${count} 筆會議記錄！`);
-                    e.target.value = ''; // Reset input
+                    e.target.value = '';
                 } catch (err) {
                     alert('匯入失敗：' + err.message);
                 }
@@ -1278,7 +1337,7 @@
 
         document.getElementById('importTasksExcelInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
-            if (!file) return;
+            if (!file || !currentUserUid) return;
 
             const reader = new FileReader();
             reader.onload = async function(e) {
@@ -1301,7 +1360,7 @@
 
                         const payload = {
                             taskId: row["任務 ID"] || row["taskId"] || `TSK-${dateStr}-${rand}`,
-                            meetingKey: '', // 匯入時無 key 則留空
+                            meetingKey: '',
                             department: row["負責部門"] || row["department"] || '製造',
                             owner: row["執行負責人"] || row["owner"] || '未指定',
                             description: row["待辦事項描述"] || row["description"] || '無描述',
@@ -1310,14 +1369,14 @@
                             updatedAt: Date.now()
                         };
 
-                        const newRef = push(ref(db, 'tasks'));
+                        const newRef = push(ref(db, `users/${currentUserUid}/tasks`));
                         await set(newRef, payload);
                         count++;
                     }
 
                     await touchLastUpdated();
                     alert(`成功匯入 ${count} 筆待辦事項！`);
-                    e.target.value = ''; // Reset input
+                    e.target.value = '';
                 } catch (err) {
                     alert('匯入失敗：' + err.message);
                 }
@@ -1325,7 +1384,7 @@
             reader.readAsArrayBuffer(file);
         });
 
-        // HTML 轉義字元保護
+        // HTML 轉義保護
         function escapeHtml(str) {
             if (!str) return '';
             return String(str)
